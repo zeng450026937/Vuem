@@ -1,2 +1,2 @@
 # vuem
-State management for vue
+Model management for vue
