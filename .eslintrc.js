@@ -2,7 +2,7 @@ module.exports =
 {
 	env:
 	{
-		node: true,
+		browser: true,
 	},
 	plugins:
 	[
@@ -12,6 +12,13 @@ module.exports =
 	[
 		'airbnb-base'
 	],
+	settings: {
+		'import/resolver': {
+			webpack: {
+				config: 'webpack.config.js'
+			}
+		}
+	},
 	parser: 'babel-eslint',
 	parserOptions:
 	{
@@ -29,8 +36,6 @@ module.exports =
 	},
 	rules:
 	{
-		'no-console': process.env.NODE_ENV === 'production' ? 2 : 0,
-    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
 		'array-bracket-spacing': [ 2, 'always',
 		{
 			objectsInArrays: true,
@@ -46,6 +51,7 @@ module.exports =
 		'comma-style': 2,
 		'computed-property-spacing': 2,
 		'constructor-super': 2,
+		'consistent-return': 0,
 		'eol-last': 2,
 		'func-call-spacing': 2,
 		'func-names': 0,
@@ -93,6 +99,7 @@ module.exports =
 		'no-catch-shadow': 2,
 		'no-class-assign': 2,
 		'no-confusing-arrow': 2,
+		'no-console': [ 2, { allow: [ 'warn', 'error' ] } ],
 		'no-const-assign': 2,
 		'no-constant-condition': [ 2 , { 'checkLoops': false } ],
 		'no-debugger': 2,
@@ -127,6 +134,7 @@ module.exports =
 		'no-multiple-empty-lines': 2,
 		'no-native-reassign': 2,
 		'no-negated-in-lhs': 2,
+		'no-nested-ternary': 0,
 		'no-new': 2,
 		'no-new-func': 2,
 		'no-new-wrappers': 2,
