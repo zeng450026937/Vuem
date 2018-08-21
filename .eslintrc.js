@@ -36,6 +36,8 @@ module.exports =
 	},
 	rules:
 	{
+		'no-console': process.env.NODE_ENV === 'production' ? 2 : 0,
+    'no-debugger': process.env.NODE_ENV === 'production' ? 2 : 0,
 		'array-bracket-spacing': [ 2, 'always',
 		{
 			objectsInArrays: true,
@@ -99,7 +101,6 @@ module.exports =
 		'no-catch-shadow': 2,
 		'no-class-assign': 2,
 		'no-confusing-arrow': 2,
-		'no-console': [ 2, { allow: [ 'warn', 'error' ] } ],
 		'no-const-assign': 2,
 		'no-constant-condition': [ 2 , { 'checkLoops': false } ],
 		'no-debugger': 2,
