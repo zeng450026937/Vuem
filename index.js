@@ -75,7 +75,7 @@ class Vuem {
       const parentModel = parent ? parent.$model : null;
 
       if (!model) {
-        vm.$model = parentModel;
+        vm.$model = parentModel ? parentModel.$root : null;
 
         return;
       }
@@ -99,7 +99,7 @@ class Vuem {
       }
       else {
         const isArray = Array.isArray(model);
-        const wrapped = Object.create(null);
+        const wrapped = {};
 
         Object.keys(model).forEach((key) => {
           const value = model[key];
@@ -108,7 +108,7 @@ class Vuem {
           wrapped[isArray ? value : key] = parser(rootModel);
         });
 
-        vm.$model = wrapped;
+        vm.$model = createModel({ data: wrapped, parent: parentModel });
       }
     }
   }
