@@ -23,7 +23,7 @@ const bailRE = /[^\w.$]/;
 
 function parsePath(path) {
   if (bailRE.test(path)) {
-    return;
+    return () => {};
   }
   const segments = path.split('.');
 
@@ -49,6 +49,7 @@ class Vuem {
 
     checkVueVersion();
 
+    // add $prevent method
     Vue.prototype.$prevent = function(prevented) {
       this._prevented = Boolean(prevented);
     };
@@ -61,68 +62,54 @@ class Vuem {
       return originEmit.apply(this, args);
     };
 
-    Vue.mixin({ beforeCreate: modelInit });
+    // inject mixin
+    Vue.mixin({ 
+      beforeCreate() {
+        iniModel(this);
+      },
+    });
 
-    function modelInit() {
-      this.$rootModel = collectRootModel(this.$options);
-      this.$model = collectModel(this.$options) || this.$rootModel;
-    }
+    function iniModel(vm) {
+      const options = vm.$options;
+      const { model, parent } = options;
+      const parentModel = parent ? parent.$model : null;
 
-    function collectRootModel(options) {
-      let rootModel = typeof options.model === 'function'
-        ? options.model()
-        : isVuem(options.model)
-          ? options.model
+      if (!model) {
+        vm.$model = parentModel;
+
+        return;
+      }
+
+      vm.$model = typeof model === 'function'
+        ? model.call(vm)
+        : isVuem(model)
+          ? model
           : null;
 
-      if (options.parent && options.parent.$rootModel) {
-        rootModel = options.parent.$rootModel;
+      if (vm.$model) return;
+      if (!parentModel) return;
+
+      const rootModel = parentModel.$root;
+
+      let parser;
+
+      if (typeof model === 'string') {
+        parser = parsePath(model);
+        vm.$model = parser(rootModel) || rootModel;
       }
+      else {
+        const isArray = Array.isArray(model);
+        const wrapped = Object.create(null);
 
-      return rootModel;
-    }
+        Object.keys(model).forEach((key) => {
+          const value = model[key];
 
-    function collectModel(options) {
-      let model;
-
-      if (options.parent && options.parent.$rootModel) {
-        model = options.parent.$rootModel;
-      }
-
-      if (!options.model || isVuem(options.model)) return model;
-
-      if (typeof options.model === 'string') {
-        model = options.model === ''
-          ? model
-          : parsePath(options.model)(model);
-      }
-      else
-      if (Array.isArray(options.model)) {
-        if (options.model.length) {
-          const wrapped = {};
-
-          options.model.forEach((name) => {
-            wrapped[name] = parsePath(name)(model);
-          });
-
-          model = wrapped;
-        }
-        else {
-          model = this.$rootModel;
-        }
-      }
-      else
-      if (typeof options.model === 'object') {
-        const wrapped = {};
-
-        Object.keys(options.model).forEach((name) => {
-          wrapped[name] = parsePath(options.model[name])(model);
+          parser = parsePath(value);
+          wrapped[isArray ? value : key] = parser(rootModel);
         });
 
-        model = wrapped;
+        vm.$model = wrapped;
       }
-
-      return model;
     }
   }
 
@@ -139,41 +126,38 @@ class Vuem {
 }
 
 function createModel(options = {}) {
-  const opts = Object.assign(
-    {
-      mixins : [ {
-        methods : {
-          $dispatch(name, ...args) {
-            function doAction() {
-              return this.$actions[name].apply(this, args);
-            }
+  options.mixins = options.mixins || [];
+  options.mixins.push({
+    methods : {
+      $dispatch(name, ...args) {
+        function doAction(vm) {
+          return vm._actions[name].apply(vm, args);
+        }
 
-            const actions = [];
+        const actions = [];
 
-            actions.push(doAction.call(this));
+        actions.push(doAction(this));
 
-            this.$children.forEach((child) => {
-              actions.push(doAction.call(child));
-            });
+        this.$children.forEach((child) => {
+          actions.push(doAction(child));
+        });
 
-            return Promise.all(actions);
-          },
-          $broadcast(event, ...args) {
-            this.$root.$emit(event, ...args);
-            
-            return this;
-          },
-        },
-      } ],
-      computed  : {},
-      models    : {},
-      actions   : {},
-      broadcast : {},
+        return Promise.all(actions);
+      },
+      $broadcast(event, ...args) {
+        this.$root.$emit(event, ...args);
+        
+        return this;
+      },
+      $subscribe(event, fn) {
+        this.$root.$on(event, fn);
+
+        return this;
+      },
     },
-    options
-  );
+  });
 
-  const vuem = new Vue(opts);
+  const vuem = new Vue(options);
 
   const modelProperty = {
     enumerable : true,
@@ -181,21 +165,25 @@ function createModel(options = {}) {
     set        : () => {},
   };
 
-  Object.keys(opts.models).forEach((key) => {
-    const model = createModel(
-      Object.assign({ parent: vuem }, opts.models[key])
-    );
+  modelProperty.get = () => (options.actions);
+  Object.defineProperty(vuem, '_actions', modelProperty);
 
-    modelProperty.get = () => (model);
-    Object.defineProperty(vuem, `$${key}`, modelProperty);
-  });
+  if (options.models) {
+    Object.keys(options.models).forEach((key) => {
+      const model = createModel(
+        Object.assign(options.models[key], { parent: vuem })
+      );
 
-  modelProperty.get = () => (opts.actions);
-  Object.defineProperty(vuem, '$actions', modelProperty);
+      modelProperty.get = () => (model);
+      Object.defineProperty(vuem, `$${key}`, modelProperty);
+    });
+  }
 
-  Object.keys(opts.broadcast).forEach((key) => {
-    this.$root.$on(key, opts.broadcast[key].bind(vuem));
-  });
+  if (options.subscribe) {
+    Object.keys(options.subscribe).forEach((key) => {
+      vuem.$root.$on(key, options.subscribe[key].bind(vuem));
+    });
+  }
 
   vuem._isVuem = true;
 
