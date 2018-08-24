@@ -165,13 +165,15 @@ function createModel(options = {}) {
     set        : () => {},
   };
 
-  modelProperty.get = () => (options.actions);
+  const { actions, models, subscribe } = options;
+
+  modelProperty.get = () => (actions);
   Object.defineProperty(vuem, '_actions', modelProperty);
 
-  if (options.models) {
-    Object.keys(options.models).forEach((key) => {
+  if (models) {
+    Object.keys(models).forEach((key) => {
       const model = createModel(
-        Object.assign(options.models[key], { parent: vuem })
+        Object.assign(models[key], { parent: vuem })
       );
 
       modelProperty.get = () => (model);
@@ -179,9 +181,9 @@ function createModel(options = {}) {
     });
   }
 
-  if (options.subscribe) {
-    Object.keys(options.subscribe).forEach((key) => {
-      vuem.$root.$on(key, options.subscribe[key].bind(vuem));
+  if (subscribe) {
+    Object.keys(subscribe).forEach((key) => {
+      vuem.$root.$on(key, subscribe[key].bind(vuem));
     });
   }
 
