@@ -19,6 +19,35 @@ function assert(condition, msg) {
   if (!condition) throw new Error(`[Vuem] ${msg}`);
 }
 
+function remove(arr, item) {
+  if (arr && arr.length && item) {
+    const index = arr.indexOf(item);
+
+    if (index > -1) {
+      return arr.splice(index, 1);
+    }
+  }
+}
+
+const noop = () => {};
+
+const sharedPropertyDefinition = {
+  enumerable: true,
+  configurable: true,
+  get: noop,
+  set: noop
+}
+
+function proxy(target, sourceKey, key) {
+  sharedPropertyDefinition.get = function proxyGetter () {
+    return this[sourceKey][key]
+  }
+  sharedPropertyDefinition.set = function proxySetter (val) {
+    this[sourceKey][key] = val
+  }
+  Object.defineProperty(target, key, sharedPropertyDefinition)
+}
+
 const bailRE = /[^\w.$]/;
 
 function parsePath(path) {
@@ -30,7 +59,7 @@ function parsePath(path) {
   return function(obj) {
     for (let i = 0; i < segments.length; i++) {
       if (!obj) return;
-      obj = obj[`$${segments[i]}`];
+      obj = obj[segments[i]];
     }
     
     return obj;
@@ -73,6 +102,9 @@ class Vuem {
       const options = vm.$options;
       const { model, parent } = options;
       const parentModel = parent ? parent.$model : null;
+
+      // TODO
+      // check whether the parent is vuem instance 
 
       if (!model) {
         vm.$model = parentModel ? parentModel.$root : null;
@@ -128,18 +160,54 @@ class Vuem {
 function createModel(options = {}) {
   options.mixins = options.mixins || [];
   options.mixins.push({
+    beforeCreate() {
+      this._models = {};
+      this._actions = {};
+      this._subscribe = {};
+    },
+    destroyed() {
+      this._models = null;
+      this._actions = null;
+      this._subscribe = null;
+    },
     methods : {
-      $dispatch(name, ...args) {
-        function doAction(vm) {
-          return vm._actions[name].apply(vm, args);
+      $register(name, model) {
+        if (!isVuem(model)) return;
+
+        if (model.$parent !== this) {
+          remove(model.$parent, model);
+          model.$parent = this;
+          this.$children.push(model);
+        }
+        if (model.$root !== this.$root) {
+          model.$root = this.$root;
+          Object.keys(model._subscribe).forEach((event) => {
+            model.$subscribe(event, model._subscribe[event].raw);
+          });
         }
 
+        this._models[name] = model;
+        proxy(this, '_models', name);
+      },
+      $unregister(model) {
+        if (!isVuem(model)) {
+          model = this[model];
+        }
+        if (!model) return;
+
+        model.$parent = null;
+        remove(this.$children, model);
+        delete this._models[name];
+      },
+      $dispatch(name, ...args) {
         const actions = [];
 
-        actions.push(doAction(this));
+        if (this._actions[name]) {
+          actions.push(this._actions[name].apply(this, args));
+        }
 
         this.$children.forEach((child) => {
-          actions.push(doAction(child));
+          actions.push(child.$dispatch(name, ...args));
         });
 
         return Promise.all(actions);
@@ -150,7 +218,23 @@ function createModel(options = {}) {
         return this;
       },
       $subscribe(event, fn) {
-        this.$root.$on(event, fn);
+        this.$unsubscribe(event);
+
+        const delegate = (...args) => {
+          return fn.apply(this, args);
+        }
+        delegate.raw = fn;
+        this._subscribe[event] = delegate;
+        this.$root.$on(event, delegate);
+
+        return this;
+      },
+      $unsubscribe(event) {
+        const delegate = this._subscribe[event];
+        if (delegate) {
+          this.$root.$off(event, delegate);
+          delete this._subscribe[event];
+        }
 
         return this;
       },
@@ -159,35 +243,27 @@ function createModel(options = {}) {
 
   const vuem = new Vue(options);
 
-  const modelProperty = {
-    enumerable : true,
-    get        : () => {},
-    set        : () => {},
-  };
+  vuem._isVuem = true;
 
   const { actions, models, subscribe } = options;
 
-  modelProperty.get = () => (actions);
-  Object.defineProperty(vuem, '_actions', modelProperty);
+  if (actions) {
+    vuem._actions = actions;
+  }
 
   if (models) {
     Object.keys(models).forEach((key) => {
-      const model = createModel(
+      vuem.$register(key, createModel(
         Object.assign(models[key], { parent: vuem })
-      );
-
-      modelProperty.get = () => (model);
-      Object.defineProperty(vuem, `$${key}`, modelProperty);
+      ));
     });
   }
 
   if (subscribe) {
     Object.keys(subscribe).forEach((key) => {
-      vuem.$root.$on(key, subscribe[key].bind(vuem));
+      vuem.$subscribe(key, subscribe[key]);
     });
   }
-
-  vuem._isVuem = true;
 
   return vuem;
 }
