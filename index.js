@@ -185,6 +185,7 @@ function createModel(options = {}) {
             model.$subscribe(event, model._subscribe[event].raw);
           });
         }
+        model.$name = name;
 
         this._models[name] = model;
         proxy(this, '_models', name);
@@ -197,7 +198,7 @@ function createModel(options = {}) {
 
         model.$parent = null;
         remove(this.$children, model);
-        delete this._models[name];
+        delete this._models[model.$name];
       },
       $dispatch(name, ...args) {
         const actions = [];
