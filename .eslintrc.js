@@ -17,7 +17,7 @@ module.exports =
 			webpack: {
 				config: 'webpack.config.js'
 			}
-		}
+		},
 	},
 	parser: 'babel-eslint',
 	parserOptions:
@@ -31,9 +31,6 @@ module.exports =
 			impliedStrict: true
 		}
 	},
-	globals: {
-		__static: true
-	},
 	rules:
 	{
 		'no-console': process.env.NODE_ENV === 'production' ? 2 : 0,
@@ -43,7 +40,7 @@ module.exports =
 			objectsInArrays: true,
 			arraysInArrays: true
 		}],
-		'arrow-parens': [ 2, 'always' ],
+		'arrow-parens': [ 2, 'as-needed' ],
 		'arrow-spacing': 2,
 		'block-spacing': [ 2, 'always' ],
 		'brace-style': [ 2, 'stroustrup', { allowSingleLine: true } ],
@@ -54,11 +51,13 @@ module.exports =
 		'computed-property-spacing': 2,
 		'constructor-super': 2,
 		'consistent-return': 0,
+		'class-methods-use-this': 0,
 		'eol-last': 2,
 		'func-call-spacing': 2,
 		'func-names': 0,
 		'generator-star-spacing': 2,
 		'guard-for-in': 2,
+		'import/no-mutable-exports': 0,
 		'indent': [ 2, 2, { 'SwitchCase': 1 } ],
 		'key-spacing': [ 2,
 		{
@@ -83,7 +82,7 @@ module.exports =
 			beforeBlockComment: true,
 			beforeLineComment: false
 		}],
-		'max-len': [ 2, 90,
+		'max-len': [ 2, 120,
 		{
 			tabWidth: 2,
 			comments: 110,
@@ -130,6 +129,7 @@ module.exports =
 		'no-lonely-if': 2,
 		'no-mixed-operators': 2,
 		'no-mixed-spaces-and-tabs': 2,
+		'no-multi-assign': 0,
 		'no-multi-spaces': 2,
 		'no-multi-str': 2,
 		'no-multiple-empty-lines': 2,
@@ -175,7 +175,7 @@ module.exports =
 		'object-curly-spacing': [ 2, 'always' ],
 		'object-property-newline': [ 2, { allowMultiplePropertiesPerLine: true } ],
 		'prefer-const': 2,
-		'prefer-destructuring': 1,
+		'prefer-destructuring': 0,
 		'prefer-rest-params': 2,
 		'prefer-spread': 2,
 		'prefer-template': 2,

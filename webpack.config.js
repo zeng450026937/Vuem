@@ -1,6 +1,6 @@
 /* eslint-disable import/no-extraneous-dependencies */
 const webpack = require('webpack');
-const UglifyPlugin = require('uglifyjs-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 const pkg = require('./package.json');
 
 const mode = 'production';
@@ -9,7 +9,7 @@ module.exports = {
   context : __dirname,
   target  : 'web',
   entry   : {
-    vuem : './index.js',
+    vuem : './src/index.js',
   },
   output : {
     path          : `${__dirname}/dist`,
@@ -47,8 +47,8 @@ module.exports = {
   optimization : {
     minimizer : mode === 'production'
       ? [
-        new UglifyPlugin({
-          uglifyOptions : {
+        new TerserPlugin({
+          terserOptions : {
             compress : {
               // turn off flags with small gains to speed up minification
               arrows         : false,
