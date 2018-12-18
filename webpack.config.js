@@ -14,13 +14,12 @@ module.exports = {
   output : {
     path          : `${__dirname}/dist`,
     filename      : '[name].js',
-    library       : 'Vuem',
+    library       : `${pkg.title}`,
     libraryTarget : 'umd',
   },
   mode,
   module : {
-    noParse : /vue/,
-    rules   : [
+    rules : [
       {
         test    : /\.js$/,
         exclude : /node_modules/,

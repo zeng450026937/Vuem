@@ -1,6 +1,7 @@
 {
   "name": "vuem",
   "version": "2.0.0",
+  "title": "Vuem",
   "description": "Model management for vue.",
   "main": "./dist/vuem.js",
   "author": "ito",
