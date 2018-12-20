@@ -41,7 +41,7 @@ export default class Model extends Layer {
       ns = `${this.ns}.${ns}`;
     }
 
-    let model = this.submodel[ns];
+    let model = this.submodel[key];
 
     if (!model) {
       model = new Model(ns);
