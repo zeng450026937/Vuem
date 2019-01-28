@@ -57,7 +57,7 @@ export default class Layer {
     ctx = ctx || this.createContext();
 
     ctx.method = method;
-    ctx.payload = payload;
+    ctx.payload = payload || {};
 
     return this.callback()(ctx);
   }
