@@ -30,6 +30,32 @@ export default class Kom extends Model {
         this.$broadcast = kom.vm.$emit.bind(kom.vm);
         this.$subscribe = kom.vm.$on.bind(kom.vm);
         this.$unsubscribe = kom.vm.$off.bind(kom.vm);
+
+        const subscribe = options.subscribe;
+
+        if (subscribe) {
+          this._subscribe = {};
+
+          Object.keys(subscribe).forEach(name => {
+            const fn = this._subscribe[name] = subscribe[name].bind(this);
+
+            this.$subscribe(name, fn);
+          });
+        }
+      },
+      beforeDestroy() {
+        const options = this.$options;
+        const kom = options.kom || (options.parent && options.parent.$kom);
+
+        if (!kom) return;
+        
+        const subscribe = this._subscribe;
+
+        if (subscribe) {
+          Object.keys(subscribe).forEach(name => {
+            this.$unsubscribe(name, subscribe[name]);
+          });
+        }
       },
     });
   }

@@ -1,6 +1,11 @@
 import Vue from 'vue';
 import Layer from './layer';
 
+const strategies = Vue.config.optionMergeStrategies;
+
+strategies.middleware = strategies.methods;
+strategies.subscribe = strategies.methods;
+
 /**
  * Expose `Model` class.
  *
@@ -25,6 +30,7 @@ export default class Model extends Layer {
     this.data = {};
     this.computed = {};
     this.watch = {};
+    this.trigger = {};
     this.vm = null;
   }
 
@@ -32,22 +38,30 @@ export default class Model extends Layer {
     return !!this.vm;
   }
 
-  model(ns) {
-    if (!ns) return this;
+  mount(key, model) {
+    if (!(model instanceof Model)) throw new TypeError('model must be an instance of Model');
 
-    const key = ns;
-
-    if (this.ns !== false) {
-      ns = `${this.ns}.${ns}`;
+    if (this.submodel[key]) {
+      console.warn(`already has model for ${key}`);
     }
+    
+    model.ns = this.genNS(key);
+    model.parent = this;
+    model.root = this.root;
+
+    this.submodel[key] = model;
+
+    return this;
+  }
+
+  model(key) {
+    if (!key) return this;
 
     let model = this.submodel[key];
 
     if (!model) {
-      model = new Model(ns);
-      model.parent = this;
-      model.root = this.root;
-      this.submodel[key] = model;
+      model = new Model();
+      this.mount(key, model);
     }
     
     return model;
@@ -89,6 +103,39 @@ export default class Model extends Layer {
     return this;
   }
 
+  subscribe(key, fn) {
+    if (this.initialized()) {
+      this.vm.$root.$on(key, fn);
+
+      return this;
+    }
+    
+    this.trigger[key] = this.trigger[key] || [];
+    this.trigger[key].push(fn);
+
+    return this;
+  }
+
+  broadcast(...args) {
+    if (this.initialized()) {
+      this.vm.$root.$emit(...args);
+
+      return this;
+    }
+
+    console.warn('broadcast can only be used when initialized');
+  }
+
+  genNS(key) {
+    let ns = key;
+
+    if (this.ns !== false) {
+      ns = `${this.ns}.${key}`;
+    }
+
+    return ns;
+  }
+
   genVM(parent) {
     return new Vue({
       parent,
@@ -120,10 +167,19 @@ export default class Model extends Layer {
 
     this.vm = this.genVM(this.parent && this.parent.vm);
 
-    const { methods } = this.vm.$options;
+    const { middleware, subscribe } = this.vm.$options;
     
-    if (methods) {
-      Object.keys(methods).forEach(name => this.register(name, methods[name]));
+    if (middleware) {
+      Object.keys(middleware).forEach(
+        name => this.register(name, middleware[name])
+      );
+    }
+    if (subscribe) {
+      Object.keys(subscribe).forEach(name => {
+        subscribe[name].forEach(
+          fn => this.vm.$root.$on(name, (...args) => fn.apply(this, args))
+        );
+      });
     }
 
     keys.forEach(key => {

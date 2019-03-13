@@ -46,6 +46,7 @@ export default class Layer {
       if (ctx.ns !== false && !this.match(ctx.ns)) return next ? next() : Promise.resolve();
 
       ctx.model = ctx.layer = this;
+      ctx.vm = this.vm || ctx.vm;
 
       const fn = compose(this.middleware);
 
