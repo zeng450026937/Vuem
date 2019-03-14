@@ -42,6 +42,29 @@ export default class Kom extends Model {
             this.$subscribe(name, fn);
           });
         }
+
+        const sketch = options.sketch;
+
+        if (sketch) {
+          const { ns, props = [] } = sketch;
+
+          let m = kom.vm;
+
+          if (ns) {
+            m = ns.split('.').reduce((acc, val) => acc[val], m);
+          }
+
+          props.forEach(key => {
+            options.computed[key] = {
+              get() {
+                return m[key];
+              },
+              set(val) {
+                m[key] = val;
+              },
+            };
+          });
+        }
       },
       beforeDestroy() {
         const options = this.$options;

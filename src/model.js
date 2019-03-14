@@ -105,7 +105,7 @@ export default class Model extends Layer {
 
   subscribe(key, fn) {
     if (this.initialized()) {
-      this.vm.$root.$on(key, fn);
+      this.vm.$root.$on(key, (...args) => fn.apply(this, args));
 
       return this;
     }
@@ -175,12 +175,14 @@ export default class Model extends Layer {
       );
     }
     if (subscribe) {
-      Object.keys(subscribe).forEach(name => {
-        subscribe[name].forEach(
-          fn => this.vm.$root.$on(name, (...args) => fn.apply(this, args))
-        );
-      });
+      Object.keys(subscribe).forEach(
+        name => this.subscribe(name, subscribe[name])        
+      );
     }
+
+    Object.entries(this.trigger).forEach(([ event, fns ]) => {
+      fns.forEach(fn => this.subscribe(event, fn));
+    });
 
     keys.forEach(key => {
       const sub = this.submodel[key];
