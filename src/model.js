@@ -123,7 +123,25 @@ export default class Model extends Layer {
       return this;
     }
 
-    console.warn('broadcast can only be used when initialized');
+    console.warn('broadcast() can only be used when initialized');
+
+    return this;
+  }
+  
+  getVM(ns) {
+    if (!this.initialized()) {
+      console.warn('getVM() can only be used when initialized');
+
+      return;
+    }
+
+    let m = this.vm;
+
+    if (ns) {
+      m = ns.split('.').reduce((acc, val) => acc[val], m);
+    }
+
+    return m;
   }
 
   genNS(key) {

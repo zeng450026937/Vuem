@@ -102,7 +102,6 @@ export default class Kom extends Model {
 
     this.root = this;
     this.d = {};
-    this.env = process.env.NODE_ENV || 'development';
   }
 
   get(key) {
@@ -116,10 +115,11 @@ export default class Kom extends Model {
   createContext(ns) {
     const context = super.createContext(ns);
 
-    delete context.model;
-    delete context.layer;
-
     context.kom = this;
+    context.getVM = this.getVM.bind(this);
+    context.isMatch = function() {
+      return this.ns === this.model.ns;
+    };
 
     return context;
   }
