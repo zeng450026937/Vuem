@@ -43,10 +43,18 @@ export default class Kom extends Model {
           });
         }
 
-        const sketch = options.sketch;
+        let sketch = options.sketch;
 
         if (sketch) {
-          const { ns, props = [] } = sketch;
+          if (!Array.isArray(sketch)) {
+            sketch = [ sketch ];
+          }
+
+          sketch.forEach(sk => reflect(sk));
+        }
+
+        function reflect(sk) {
+          const { ns, props = [] } = sk;
 
           let m = kom.vm;
 
@@ -54,7 +62,13 @@ export default class Kom extends Model {
             m = ns.split('.').reduce((acc, val) => acc[val], m);
           }
 
+          if (props.length > 0) {
+            options.computed = options.computed || {};
+          }
+
           props.forEach(key => {
+            if (options.computed[key]) return console.warn(`property duplicate: ${key}`);
+                        
             options.computed[key] = {
               get() {
                 return m[key];
