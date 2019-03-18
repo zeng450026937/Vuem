@@ -45,7 +45,7 @@ export default class Model extends Layer {
       console.warn(`already has model for ${key}`);
     }
     
-    model.ns = this.genNS(key);
+    model.setNS(this.genNS(key));
     model.parent = this;
     model.root = this.root;
 
@@ -142,6 +142,14 @@ export default class Model extends Layer {
     }
 
     return m;
+  }
+
+  setNS(ns = false) {
+    this.ns = ns;
+
+    Object.keys(this.submodel).keys(key => {
+      this.submodel[key].setNS(this.genNS(key));
+    });
   }
 
   genNS(key) {
