@@ -147,7 +147,7 @@ export default class Model extends Layer {
   setNS(ns = false) {
     this.ns = ns;
 
-    Object.keys(this.submodel).keys(key => {
+    Object.keys(this.submodel).forEach(key => {
       this.submodel[key].setNS(this.genNS(key));
     });
   }
