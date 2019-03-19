@@ -105,7 +105,7 @@ export default class Model extends Layer {
 
   subscribe(key, fn) {
     if (this.initialized()) {
-      this.vm.$root.$on(key, (...args) => fn.apply(this, args));
+      this.vm.$root.$on(key, (...args) => fn.apply(this.vm, args));
 
       return this;
     }
@@ -192,6 +192,8 @@ export default class Model extends Layer {
     });
 
     this.vm = this.genVM(this.parent && this.parent.vm);
+    this.vm.$dispatch = this.root.dispatch.bind(this.root);
+    this.vm.$broadcast = this.broadcast.bind(this);
 
     const { middleware, subscribe } = this.vm.$options;
     

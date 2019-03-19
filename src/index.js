@@ -67,7 +67,7 @@ export default class Kom extends Model {
           }
 
           props.forEach(key => {
-            if (options.computed[key]) return console.warn(`property duplicate: ${key}`);
+            if (options.computed[key]) return console.warn(`reflect property maybe duplicate: ${key}`);
                         
             options.computed[key] = {
               get() {
