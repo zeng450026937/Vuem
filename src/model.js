@@ -221,6 +221,14 @@ export default class Model extends Layer {
     return this;
   }
 
+  destroy() {
+    if (!this.initialized()) return;
+
+    Object.keys(this.submodel).forEach(key => this.submodel[key].destroy());
+    
+    this.vm.$destroy();
+  }
+
   match(ns) {
     return super.match(ns) || ns.startsWith(this.ns) || this.ns.startsWith(ns);
   }
