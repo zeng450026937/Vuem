@@ -163,12 +163,20 @@ export default class Model extends Layer {
   }
 
   genVM(parent) {
+    const model = this;
+
     return new Vue({
       parent,
       mixins   : this.mixins,
       data     : this.data,
       computed : this.computed,
       watch    : this.watch,
+      beforeCreate() {
+        this.$kom = model.root;
+        this.$getVM = model.root.getVM.bind(model.root);
+        this.$dispatch = model.root.dispatch.bind(model.root);
+        this.$broadcast = model.broadcast.bind(model);
+      },
     });
   }
 
@@ -192,8 +200,6 @@ export default class Model extends Layer {
     });
 
     this.vm = this.genVM(this.parent && this.parent.vm);
-    this.vm.$dispatch = this.root.dispatch.bind(this.root);
-    this.vm.$broadcast = this.broadcast.bind(this);
 
     const { middleware, subscribe } = this.vm.$options;
     

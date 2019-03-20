@@ -26,6 +26,7 @@ export default class Kom extends Model {
 
         this.$kom = kom;
         this.$model = kom.vm;
+        this.$getVM = kom.getVM.bind(kom);
         this.$dispatch = kom.dispatch.bind(kom);
         this.$broadcast = kom.vm.$emit.bind(kom.vm);
         this.$subscribe = kom.vm.$on.bind(kom.vm);
