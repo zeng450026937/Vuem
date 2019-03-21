@@ -23,7 +23,6 @@ export default class Model extends Layer {
   constructor(ns = false) {
     super(ns);
 
-    this.root = null;
     this.parent = null;
     this.submodel = {};
     this.mixins = [];
@@ -32,6 +31,10 @@ export default class Model extends Layer {
     this.watch = {};
     this.trigger = {};
     this.vm = null;
+  }
+
+  get root() {
+    return this.parent ? this.parent.root : this;
   }
 
   initialized() {
@@ -46,8 +49,7 @@ export default class Model extends Layer {
     }
     
     model.setNS(this.genNS(key));
-    model.parent = this;
-    model.root = this.root;
+    model.setParent(this);
 
     this.submodel[key] = model;
 
@@ -150,6 +152,10 @@ export default class Model extends Layer {
     Object.keys(this.submodel).forEach(key => {
       this.submodel[key].setNS(this.genNS(key));
     });
+  }
+
+  setParent(parent) {
+    this.parent = parent;
   }
 
   genNS(key) {

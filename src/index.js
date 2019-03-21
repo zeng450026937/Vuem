@@ -101,7 +101,6 @@ export default class Kom extends Model {
   constructor() {
     super();
 
-    this.root = this;
     this.d = {};
   }
 
