@@ -11,19 +11,18 @@ export default function compose(middleware) {
 
     return dispatch(0);
     
-    function dispatch(i) {
-      if (i <= index) return Promise.reject(new Error('next() called multiple times'));
+    async function dispatch(i) {
+      if (i <= index) throw new Error('next() called multiple times');
+
       index = i;
+
       let fn = middleware[i];
 
       if (i === middleware.length) fn = next;
-      if (!fn) return Promise.resolve();
-      try {
-        return Promise.resolve(fn(context, dispatch.bind(null, i + 1)));
-      }
-      catch (err) {
-        return Promise.reject(err);
-      }
+
+      if (!fn) return;
+
+      return fn(context, dispatch.bind(null, i + 1));
     }
   };
 }
